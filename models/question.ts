@@ -35,4 +35,4 @@ export const notConfirmedQuestion = model(
   "notConfirmedQuestions",
   questionSchema
 );
-export const question = model("questions", questionSchema);
+export const questionModel = model("questions", questionSchema);

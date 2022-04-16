@@ -4,7 +4,8 @@ import mongoose from "mongoose";
 import bodyParser from "body-parser";
 
 //models
-import { notConfirmedQuestion, Question, question } from "./models/question";
+import { notConfirmedQuestion, Question, questionModel } from "./models/question";
+import {userModel}  from "./models/user"
 
 //functions
 import generateIdForQuestion from "./code/generateIdForQuestion";
@@ -25,23 +26,21 @@ app.get("/", (_, res) => {
 app.get("/get/question/", async (req, res) => {
   try {
     const questionId = parseInt(req.query.id?.toString() || "0");
-    const questionObject = await question
-      .findOne({ id: questionId })
-      .catch(() => {});
+    const questionObject = await questionModel
+      .findOne({ id:{$gt:questionId-1}})
+      .catch((error) => {
+        console.log(error)
+      });
     if (!questionObject) {
-      for (let index = questionId; index < questionId + 50; index++) {
-        const questionObject = await question
-          .findOne({ id: index })
-          .catch(() => {});
-        if (questionObject) {
-          questionObject.answers = shuffleArray(questionObject.answers);
-          return res.send(questionObject);
-        }
-      }
+      const questionObject = await questionModel
+      .findOne({ id:{$gt:0}})
+      .catch((error) => {
+        console.log(error)
+      });
+      return res.send(questionObject)
     } else {
       questionObject.answers = shuffleArray(questionObject.answers);
     }
-
     res.send(questionObject);
   } catch (error) {
     console.log(error);
@@ -71,7 +70,7 @@ app.post("/confirm/question/", async (req, res) => {
       id: questionId,
     });
     if (questionForConfirmation) {
-      question
+      questionModel
         .create({
           id: await generateIdForQuestion(),
           questionText: questionForConfirmation.questionText,
@@ -89,6 +88,36 @@ app.post("/confirm/question/", async (req, res) => {
     res.send("error");
   }
 });
+
+app.post("/api/check/answer",async(req,res)=>{
+  try {
+    const questionId = Number(req.body.questionId)
+    const answerText = req.body.answerText.toString()
+
+    const question = questionModel.findOne({id:questionId})
+
+  } catch (error) {
+    
+  }
+})
+
+app.post("/api/signup/user",async(req,res)=>{
+  try {
+    const username = req.body.username.toString()
+
+    await userModel.create({username:username}).catch((error)=>{
+      console.log(error)
+    })
+    
+  } catch (error) {
+    res.send("error")  
+  }
+});
+
+
+
+
+
 
 app.listen(PORT, () => {
   mongoose.connect(process.env.MONGO_URL || "", {
